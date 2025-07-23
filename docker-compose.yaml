@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  jobmanager:
+    image: flink:1.19.3
+    container_name: flink-jobmanager
+    hostname: jobmanager
+    ports:
+      - "8085:8081" # Flink Web UI
+    volumes:
+      - ./conf:/opt/flink/conf
+    command: jobmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+    networks:
+      - flink-net
+
+  taskmanager:
+    image: flink:1.19.3
+    container_name: flink-taskmanager
+    depends_on:
+      - jobmanager
+    volumes:
+      - ./conf:/opt/flink/conf
+    command: taskmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+    networks:
+      - flink-net
+
+networks:
+  flink-net:
