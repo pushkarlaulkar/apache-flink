@@ -1,32 +1,38 @@
-version: '3.8'
+version: "3.9"
 
 services:
   jobmanager:
-    image: flink:1.19.3
-    container_name: flink-jobmanager
-    hostname: jobmanager
-    ports:
-      - "8085:8081" # Flink Web UI
-    volumes:
-      - ./conf:/opt/flink/conf
+    image: flink:latest
+    container_name: flink_jobmanager
     command: jobmanager
+    ports:
+      - "8081:8081"   # Web UI / REST API
+      - "6123:6123"   # RPC
     environment:
-      - JOB_MANAGER_RPC_ADDRESS=jobmanager
-    networks:
-      - flink-net
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        parallelism.default: 4
+        taskmanager.numberOfTaskSlots: 4
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+        state.savepoints.dir: file:///opt/flink/savepoints
+    volumes:
+      - ./flink/checkpoints:/opt/flink/checkpoints
+      - ./flink/savepoints:/opt/flink/savepoints
 
   taskmanager:
-    image: flink:1.19.3
-    container_name: flink-taskmanager
+    image: flink:latest
+    command: taskmanager
+    scale: 8
     depends_on:
       - jobmanager
-    volumes:
-      - ./conf:/opt/flink/conf
-    command: taskmanager
     environment:
-      - JOB_MANAGER_RPC_ADDRESS=jobmanager
-    networks:
-      - flink-net
-
-networks:
-  flink-net:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 4
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+        state.savepoints.dir: file:///opt/flink/savepoints
+    volumes:
+      - ./flink/checkpoints:/opt/flink/checkpoints
+      - ./flink/savepoints:/opt/flink/savepoints
